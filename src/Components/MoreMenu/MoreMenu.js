@@ -1,0 +1,106 @@
+import * as React from 'react'
+import withStyles from '@material-ui/core/styles/withStyles'
+import Menu from 'material-ui-popup-state/HoverMenu'
+import MenuItem from '@material-ui/core/MenuItem'
+import ListItemText from '@material-ui/core/ListItemText'
+import ChevronRight from '@material-ui/icons/ChevronRight'
+import IconButton from '@material-ui/core/IconButton'
+import CircleMore from '@material-ui/icons/MoreVert'
+import {
+  usePopupState,
+  bindHover,
+  bindMenu,
+} from 'material-ui-popup-state/hooks'
+
+const ParentPopupState = React.createContext(null)
+
+const CascadingHoverMenus = () => {
+  const popupState = usePopupState({ popupId: 'demoMenu', variant: 'popover' })
+  return (
+    <div style={{ height: 600 }}>
+
+
+      <IconButton variant="contained" {...bindHover(popupState)}>
+        <CircleMore/>
+      </IconButton>
+
+      {/* <Button variant="contained" {...bindHover(popupState)}>
+        Hover to open Menu
+      </Button> */}
+      <ParentPopupState.Provider value={popupState}>
+        <Menu
+          // {...bindMenu(popupState)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          getContentAnchorEl={null}
+        >
+          <MenuItem onClick={popupState.close}>Tea</MenuItem>
+          <MenuItem onClick={popupState.close}>Cake</MenuItem>
+          <MenuItem onClick={popupState.close}>API$Services</MenuItem>
+          <Submenu popupId="moreChoicesMenu" title="More Choices">
+            <MenuItem onClick={popupState.close}>Dashboard</MenuItem>
+            <MenuItem onClick={popupState.close}>Library</MenuItem>
+            <Submenu popupId="evenMoreChoicesMenu" title="Even More Choices">
+              <MenuItem onClick={popupState.close}>OAuthConsentScreen</MenuItem>
+              <MenuItem onClick={popupState.close}>Domain Verification</MenuItem>
+              <MenuItem onClick={popupState.close}>Page Usage Agreement</MenuItem>
+            </Submenu>
+            <Submenu popupId="moreBenignChoices" title="More Benign Choices">
+              <MenuItem onClick={popupState.close}>Salad</MenuItem>
+              <MenuItem onClick={popupState.close}>Lobotomy</MenuItem>
+            </Submenu>
+          </Submenu>
+        </Menu>
+      </ParentPopupState.Provider>
+    </div>
+  )
+}
+
+export default CascadingHoverMenus
+
+const submenuStyles = theme => ({
+  menu: {
+    top: theme.spacing(-1),
+  },
+  title: {
+    flexGrow: 1,
+  },
+  moreArrow: {
+    marginRight: theme.spacing(-1),
+  },
+})
+
+const Submenu = withStyles(submenuStyles)(
+  // Unfortunately, MUI <Menu> injects refs into its children, which causes a
+  // warning in some cases unless we use forwardRef here.
+  React.forwardRef(({ classes, title, popupId, children, ...props }, ref) => {
+    const parentPopupState = React.useContext(ParentPopupState)
+    const popupState = usePopupState({
+      popupId,
+      variant: 'popover',
+      parentPopupState,
+    })
+    return (
+      <ParentPopupState.Provider value={popupState}>
+        <MenuItem
+          {...bindHover(popupState)}
+          selected={popupState.isOpen}
+          ref={ref}
+        >
+          <ListItemText className={classes.title}>{title}</ListItemText>
+          <ChevronRight className={classes.moreArrow} />
+        </MenuItem>
+        <Menu
+          {...bindMenu(popupState)}
+          className={classes.menu}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          getContentAnchorEl={null}
+          {...props}
+        >
+          {children}
+        </Menu>
+      </ParentPopupState.Provider>
+    )
+  })
+)
